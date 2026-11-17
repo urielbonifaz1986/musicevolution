@@ -13,13 +13,14 @@ function pasto(x, y, w, h) {
 
 // ---------- Foro de retos con la pantalla LED del piso ----------
 function foroRetos(personajes = [], opciones = {}) {
-  const led = opciones.led || 'despensa';
+  const led = opciones.led || 'pantalla';  // 'pantalla' = la pantalla gigante del piso, sin evento
   let s = `<defs>
     <pattern id="pasto" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#3f8f2c"/><path d="M1 8 L2 3 M4 8 L5 2 M7 8 L6 4" stroke="#5bb33b" stroke-width="1.2"/><path d="M3 8 L3 5" stroke="#2f7020" stroke-width="1"/></pattern>
     <linearGradient id="ledRojo" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a2a6e"/><stop offset=".35" stop-color="#d42a5c"/><stop offset=".6" stop-color="#7a2a64"/><stop offset="1" stop-color="#e2346a"/></linearGradient>
     <linearGradient id="ledAzul" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#0b2a7a"/><stop offset=".5" stop-color="#1e6ae0"/><stop offset="1" stop-color="#0b2a7a"/></linearGradient>
     <linearGradient id="oro" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff2b0"/><stop offset=".5" stop-color="#f2b33d"/><stop offset="1" stop-color="#b8701c"/></linearGradient>
     <radialGradient id="destello" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ff7aa8" stop-opacity=".7"/><stop offset="1" stop-color="#ff7aa8" stop-opacity="0"/></radialGradient>
+    <clipPath id="recorteLed"><polygon points="560,470 1600,470 1600,860 60,860"/></clipPath>
     <filter id="suave"><feGaussianBlur stdDeviation="6"/></filter>
   </defs>`;
   // pared de paneles geométricos
@@ -48,7 +49,14 @@ function foroRetos(personajes = [], opciones = {}) {
   s += `<rect x="0" y="420" width="1600" height="8" fill="#000" opacity=".15"/>`;
   // pantalla LED en el piso (en perspectiva)
   const ledPts = '560,470 1600,470 1600,860 60,860';
-  if (led === 'despensa') {
+  if (led === 'pantalla') {
+    // Pantalla LED gigante del piso, encendida sin ningún evento encima
+    s += `<polygon points="${ledPts}" fill="#1a0f3a"/>`;
+    s += `<g clip-path="url(#recorteLed)"><ellipse cx="520" cy="760" rx="520" ry="120" fill="#c42a8a" opacity=".75" filter="url(#suave)"/><ellipse cx="1150" cy="560" rx="560" ry="90" fill="#2a5ae0" opacity=".8" filter="url(#suave)"/><ellipse cx="1300" cy="790" rx="380" ry="80" fill="#7a2ad0" opacity=".8" filter="url(#suave)"/><ellipse cx="900" cy="660" rx="300" ry="50" fill="#ffb03a" opacity=".35" filter="url(#suave)"/>`;
+    for (let i = 0; i <= 12; i++) { const t = i / 12, x1 = 560 + (1600 - 560) * t, x2 = 60 + (1600 - 60) * t; s += `<path d="M${x1} 470 L${x2} 860" stroke="#000" stroke-width="2" opacity=".35"/>`; }
+    for (const y of [500, 540, 590, 650, 720, 800]) { const t = (y - 470) / 390, x = 560 - 500 * t; s += `<path d="M${x} ${y} L1600 ${y}" stroke="#000" stroke-width="2" opacity=".35"/>`; }
+    s += `</g>`;
+  } else if (led === 'despensa') {
     s += `<polygon points="${ledPts}" fill="url(#ledRojo)"/>`;
     s += `<ellipse cx="760" cy="700" rx="380" ry="90" fill="url(#destello)" filter="url(#suave)"/><ellipse cx="1250" cy="560" rx="260" ry="60" fill="url(#destello)" filter="url(#suave)"/>`;
     s += `<g transform="translate(0 0)"><text x="1270" y="690" font-family="DejaVu Sans" font-weight="700" font-style="italic" font-size="210" fill="url(#oro)" text-anchor="middle" transform="skewX(-12) translate(140 0)" stroke="#7a3a10" stroke-width="3">VS</text>`;
@@ -64,16 +72,16 @@ function foroRetos(personajes = [], opciones = {}) {
     s += `<path d="M560 470 L760 860 M900 470 L1000 860 M1250 470 L1300 860 M300 860 L700 600 L1600 640" stroke="#f2b33d" stroke-width="10" opacity=".8" fill="none"/><path d="M200 760 L1600 560" stroke="#7fd0ff" stroke-width="5" opacity=".7"/>`;
   }
   s += `<polygon points="${ledPts}" fill="none" stroke="#111" stroke-width="4" opacity=".4"/>`;
-  // coche tapado con lona mostaza
-  s += `<path d="M20 520 Q30 450 120 440 L300 440 Q380 450 390 520 L400 600 L10 600Z" fill="#d9a23c"/><path d="M60 470 Q80 520 70 600 M200 446 Q210 520 200 600 M330 460 Q350 530 340 600" stroke="#b98326" stroke-width="5" fill="none"/><ellipse cx="205" cy="604" rx="200" ry="14" fill="#000" opacity=".18"/>`;
+  // coche tapado con lona mostaza (solo en el evento del reto)
+  if (opciones.evento) s += `<path d="M20 520 Q30 450 120 440 L300 440 Q380 450 390 520 L400 600 L10 600Z" fill="#d9a23c"/><path d="M60 470 Q80 520 70 600 M200 446 Q210 520 200 600 M330 460 Q350 530 340 600" stroke="#b98326" stroke-width="5" fill="none"/><ellipse cx="205" cy="604" rx="200" ry="14" fill="#000" opacity=".18"/>`;
   // personajes en fila al fondo (pies sobre la línea del pasto)
   const n = personajes.length;
   personajes.forEach((p, i) => {
     const x = 800 + (i - (n - 1) / 2) * Math.min(80, 1100 / Math.max(n, 1)) + 150;
     s += colocar(p, x, 452, 240);
   });
-  // podio azul con tapa blanca (al frente)
-  s += `<g transform="translate(-330 10)"><polygon points="980,560 1130,560 1130,720 980,720" fill="#1d3fa8"/><polygon points="1130,560 1170,540 1170,700 1130,720" fill="#142e80"/><polygon points="980,560 1020,540 1170,540 1130,560" fill="#f4f4f4"/><rect x="1010" y="590" width="40" height="100" fill="#14318a"/><rect x="1068" y="520" width="6" height="30" fill="#bfc5cc"/></g>`;
+  // podio azul con tapa blanca (solo en el evento del reto)
+  if (opciones.evento) s += `<g transform="translate(-330 10)"><polygon points="980,560 1130,560 1130,720 980,720" fill="#1d3fa8"/><polygon points="1130,560 1170,540 1170,700 1130,720" fill="#142e80"/><polygon points="980,560 1020,540 1170,540 1130,560" fill="#f4f4f4"/><rect x="1010" y="590" width="40" height="100" fill="#14318a"/><rect x="1068" y="520" width="6" height="30" fill="#bfc5cc"/></g>`;
   // marca de la página
   s += `<text x="40" y="880" font-family="DejaVu Sans" font-weight="700" font-size="22" fill="#fff" opacity=".85">Uriel Bonifaz · parodia</text>`;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900">${s}</svg>`;
